@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Teams-Clone</title>
+
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+        <link rel='stylesheet' href='../css/style.css' type="text/css">
+
+        <script src='/socket.io/socket.io.js'></script>
+        <script type="module" src='../js/webrtc.js'></script>
+        <script type="module" src='../js/events.js'></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.3.0/adapter.min.js" integrity="sha256-2qQheewaqnZlXJ3RJRghVUwD/3fD9HNqxh4C+zvgmF4=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        
+    </head>
+
+    <body id="dark-mode">
+       
+        <nav class="navbar fixed-top bg-secondary rounded-0 d-print-none">
+            <div class="text-white" id='meeting-topic'>TEAMS</div>
+           
+              
+            <div class="room-comm" hidden>
+                <button class="btn btn-sm rounded-0 btn-no-effect" id='copy-room-link' onclick="alert(location.href +'     Share this URL!!!')">
+                    <i class="fa fa-link text-white"></i>
+                </button>
+                <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-video'>
+                    <i class="fa fa-video text-white"></i>
+                </button>
+
+                <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-darkmode'>
+                    <i class="fas fa-moon text-white"></i>
+                </button>
+
+                <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-screen-share'>
+                    <i class="fas fa-desktop text-white"></i>
+                </button>
+
+                <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-mute'>
+                    <i class="fa fa-volume-up text-white"></i>
+                </button>
+
+                <button class="btn btn-sm text-white pull-right  btn-no-effect" id='toggle-chat-pane'>
+                    <i class="fa fa-comment"></i> 
+                    <span class="badge badge-danger very-small font-weight-lighter" id='new-chat-notification' hidden>New</span>
+                </button>
+
+                <button class="btn btn-sm rounded-0 btn-no-effect text-white">
+                    <a href="/" class="text-white text-decoration-none badge-danger">Leave</a>
+                </button>
+            </div>
+        </nav>
+
+        <div class="container-fluid" id='room-create' hidden>
+            <div class="row">
+                <div class="mt-5">Start a meeting</div>
+            </div>
+            
+            <div class="row ">
+                <div class="col-12 text-center">
+                    <span class="form-text small text-danger" id='err-msg'></span>
+                </div>
+
+                
+                    <label for="room-name">Meeting topic</label>
+                    <input type="text" id='room-name'  placeholder="Topic">
+                
+
+                
+                    <label for="your-name">Your Name</label>
+                    <input type="text" id='your-name'  placeholder="Your Name">
+               
+                     
+                    <button id='create-room' >Join</button>
+               
+
+                <button class="col-12 col-md-4 offset-md-4 mb-3" id='room-created' hidden></button>
+            </div>
+        </div>
+
+
+
+        <div class="container-fluid" id='username-set' hidden>
+            <div class="row">
+                <div class="mt-5">Join Meeting</div>
+            </div>
+            
+            <div class="row mt-2">
+                <div class="col-12 text-center">
+                    <span class="form-text small text-danger" id='err-msg-username'></span>
+                </div>
+
+                
+                    <label for="username">Your Name</label>
+                    <input type="text" id='username'  placeholder="Your Name">
+                
+                   
+                
+                    <button id='enter-room' >Join</button>
+                
+            </div>
+        </div>
+
+
+        
+        <div class="container room-comm" hidden>
+            <div class="row">
+                <video class="local-video" id='local' volume='0' autoplay muted></video>
+            </div>
+            
+            
+                <div class="col-md-9 mt-3 mb-3 main">
+                    <div class="row" id='videos'></div>
+                    
+    
+                </div>
+               
+                <div class=" container-fluid chat-col d-print-none " style="background-color: #aa22ee;" id='chat-pane' hidden>
+                    CHAT
+                        
+                        <div id='chat-messages'></div>
+                    
+                  
+                </div>
+                
+                    
+                        <textarea id='chat-input' class="form-control rounded-0 chat-box border-dark" rows='3' placeholder="Type here..." hidden></textarea>
+            
+                
+                    
+        </div>
+    
+    </body>
+</html>

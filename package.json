@@ -1,0 +1,23 @@
+{
+  "name": "teams-clone",
+  "version": "0.0.1",
+  "description": "Video chat web app using Webrtc,socket-io, nodejs and express",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  },
+  "scripts": {
+    "watch": "nodemon --watch \"src/\" --exec \"node src/app.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "LiveStream",
+    "Server"
+  ],
+  "author": "KNVS Sai Sneha",
+  "license": "ISC"
+}
