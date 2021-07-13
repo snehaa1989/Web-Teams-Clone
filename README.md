@@ -12,9 +12,11 @@ Key features of project:
 
 
 ## Getting Started
-•	`npm i express`
+•	fork this repository or download the code.
+In the terminal, make sure you are in root folder and run script
+•   `npm i express`
 •	`npm i socket.io`
-•	make sure you are in root folder and run script `nodemon app.js`
+•	`nodemon app.js`
 
 ## File structure
 #### `/` - ROOT FOLDER
@@ -37,7 +39,6 @@ In the project directory, you can run:
 
 ##  BLOGS AND RESOURCES
 
-•	https://acidtango.com/thelemoncrunch/how-to-implement-a-video-conference-with-webrtc-and-node/
 •	https://socket.io/docs/v4
 •	https://www.w3schools.com/bootstrap/bootstrap_grid_examples.asp, https://momentjs.com/, https://webrtc.org/getting-started/media-devices
 •	https://dev.to/arjhun777/video-chatting-and-screen-sharing-with-react-node-webrtc-peerjs-18fg
