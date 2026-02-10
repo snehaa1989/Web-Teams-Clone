@@ -3,7 +3,7 @@ MICROSOFT ENGAGE 2021 CHALLENGE - Build a Microsoft Teams clone
 Your solution should be a fully functional prototype with at least one mandatory functionality - a minimum of two participants should be able connect with each other using your product to have a video conversation. 
 
 Key features of project:
-•	Multi-participants video chat
+•	Multi-participants video conferencing
 •	Toggling of video stream
 •	Toggling of audio stream (mute & unmute)
 •	Text chat, display username, date and time
