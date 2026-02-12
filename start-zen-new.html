@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Start New Meeting - Zenference</title>
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+        
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+        <!-- Custom CSS -->
+        <link rel='stylesheet' href='css/style.css' type="text/css">
+        
+        <style>
+            .meeting-container {
+                min-height: 100vh;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .meeting-card {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 20px;
+                padding: 40px;
+                max-width: 500px;
+                width: 100%;
+            }
+            
+            .form-control {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: white;
+                border-radius: 10px;
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            .form-control:focus {
+                background: rgba(255, 255, 255, 0.15);
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+                outline: none;
+            }
+            
+            .btn-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                border-radius: 10px;
+                padding: 15px 30px;
+                font-size: 16px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+            
+            .btn-secondary {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                padding: 15px 30px;
+                font-size: 16px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            
+            .btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateY(-2px);
+            }
+            
+            .link-display {
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 10px;
+                padding: 20px;
+                margin-top: 20px;
+                position: relative;
+            }
+            
+            .link-input {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 12px;
+                color: white;
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+            }
+            
+            .copy-btn {
+                background: #667eea;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 15px;
+                color: white;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .copy-btn:hover {
+                background: #5a67d8;
+            }
+            
+            .copy-btn.copied {
+                background: #28a745;
+            }
+            
+            .success-animation {
+                animation: slideInUp 0.5s ease-out;
+            }
+            
+            @keyframes slideInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .navbar-brand {
+                color: white !important;
+                font-weight: 700;
+                font-size: 24px;
+            }
+            
+            .user-info {
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <!-- Navigation -->
+        <nav class="navbar fixed-top rounded-0 d-print-none glass-card" style="background: linear-gradient(90deg, var(--sea-blue) 0%, var(--sea-green) 50%, var(--light-pink) 100%); border-bottom: 2px solid var(--glass-border);">
+            <div class="text-white" id='meeting-topic' style="font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Zenference 🍃</div>
+            <div class="ml-auto d-flex align-items-center">
+                <!-- User Info -->
+                <div class="user-info mr-3 text-white" id="user-info" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user-circle mr-2" style="font-size: 20px;"></i>
+                        <div>
+                            <div class="user-name" id="user-name" style="font-weight: 700; font-size: 14px;">User</div>
+                            <div class="user-email" id="user-email" style="font-size: 12px; opacity: 0.8;">user@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logout Button - Always Visible -->
+                <button class="btn btn-sm rounded-0 btn-no-effect text-white ml-2" id='logout-btn' title="Logout">
+                    <i class="fa fa-sign-out-alt"></i> <span class="d-none d-md-inline">Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="meeting-container">
+            <div class="meeting-card">
+                <!-- Initial Form -->
+                <div id="startForm">
+                    <h2 class="text-center mb-4 text-white">
+                        <i class="fas fa-video mr-3"></i>Start New Meeting
+                    </h2>
+                    <p class="text-center text-white mb-4">
+                        Create a meeting and share the link with others
+                    </p>
+                    
+                    <form id="startMeetingForm">
+                        <div class="form-group mb-4">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="meetingTopic" 
+                                   placeholder="Enter meeting topic (optional)" 
+                                   autocomplete="off">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-video mr-2"></i>Start New Meeting
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <a href="/dashboard.html" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Meeting Ready Display -->
+                <div id="meetingReady" style="display: none;">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+                        <h3 class="text-white mt-3">Your Meeting is Ready!</h3>
+                    </div>
+                    
+                    <div class="link-display">
+                        <div class="d-flex align-items-center mb-3">
+                            <input type="text" 
+                                   class="form-control link-input" 
+                                   id="meetingLink" 
+                                   readonly 
+                                   value="">
+                            <button class="copy-btn" id="copyLinkBtn" onclick="copyMeetingLink()">
+                                <i class="fas fa-copy mr-1"></i>Copy
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button class="btn btn-primary btn-block" id="joinMeetingBtn">
+                                <i class="fas fa-door-open mr-2"></i>Join Meeting Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-secondary" onclick="createNewMeeting()">
+                            <i class="fas fa-plus mr-2"></i>Create Another Meeting
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="js/auth.js"></script>
+        
+        <script>
+            let meetingData = null;
+            
+            // Initialize page
+            document.addEventListener('DOMContentLoaded', () => {
+                setupEventHandlers();
+            });
+            
+            function setupEventHandlers() {
+                // Handle form submission
+                document.getElementById('startMeetingForm').addEventListener('submit', handleStartMeeting);
+                
+                // Handle join meeting button
+                document.getElementById('joinMeetingBtn').addEventListener('click', handleJoinMeeting);
+                
+                // Handle logout
+                document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            }
+            
+            async function handleStartMeeting(e) {
+                e.preventDefault();
+                
+                const topic = document.getElementById('meetingTopic').value.trim();
+                const sessionData = localStorage.getItem('authSession');
+                const parsed = JSON.parse(sessionData);
+                
+                // Generate unique meeting ID
+                const meetingId = generateMeetingId();
+                const meetingLink = `${window.location.origin}/meeting.html?room=${meetingId}`;
+                
+                // Create meeting room via API
+                try {
+                    const response = await fetch('/api/zen/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${parsed.token}`
+                        },
+                        body: JSON.stringify({
+                            title: topic || 'Quick Meeting',
+                            description: '',
+                            settings: {
+                                allowScreenShare: true,
+                                allowRecording: false,
+                                enableChat: true,
+                                enableFileShare: true,
+                                waitingRoom: false,
+                                muteOnEntry: false,
+                                videoOnEntry: true
+                            }
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        meetingData = {
+                            id: result.room.roomId,
+                            topic: topic || 'Quick Meeting',
+                            link: `${window.location.origin}/meeting.html?room=${result.room.roomId}`,
+                            roomId: result.room.roomId
+                        };
+                        
+                        showMeetingReady();
+                        
+                        // Show success message
+                        alert('Meeting created successfully! Your meeting link is ready to share.');
+                    } else {
+                        alert('Failed to create meeting: ' + result.message);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error creating meeting:', error);
+                    alert('Error creating meeting. Please try again.');
+                }
+            }
+            
+            function showMeetingReady() {
+                if (!meetingData) return;
+                
+                // Hide form, show meeting ready display
+                document.getElementById('startForm').style.display = 'none';
+                document.getElementById('meetingReady').style.display = 'block';
+                document.getElementById('meetingReady').classList.add('success-animation');
+                
+                // Set meeting link
+                document.getElementById('meetingLink').value = meetingData.link;
+            }
+            
+            function createNewMeeting() {
+                // Reset form and show it again
+                document.getElementById('meetingReady').style.display = 'none';
+                document.getElementById('startForm').style.display = 'block';
+                document.getElementById('meetingTopic').value = '';
+                meetingData = null;
+            }
+            
+            function copyMeetingLink() {
+                if (!meetingData) return;
+                
+                const linkInput = document.getElementById('meetingLink');
+                linkInput.select();
+                linkInput.setSelectionRange(0, 99999);
+                
+                try {
+                    document.execCommand('copy');
+                    
+                    // Show copied feedback
+                    const copyBtn = document.getElementById('copyLinkBtn');
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                    copyBtn.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                    
+                } catch (err) {
+                    console.error('Failed to copy link:', err);
+                    alert('Failed to copy link. Please copy manually.');
+                }
+            }
+            
+            function handleJoinMeeting() {
+                if (!meetingData) {
+                    alert('No meeting data available. Please create a meeting first.');
+                    return;
+                }
+                
+                // Redirect to meeting room with the room ID
+                const meetingUrl = `${window.location.origin}/meeting.html?room=${meetingData.id}`;
+                window.location.href = meetingUrl;
+            }
+            
+            function generateMeetingId() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let result = '';
+                for (let i = 0; i < 3; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                result += '-';
+                for (let i = 0; i < 4; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+            
+            function handleLogout() {
+                if (confirm('Are you sure you want to logout?')) {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/';
+                }
+            }
+        </script>
+    </body>
+</html>

@@ -4,13 +4,23 @@
   "description": "Video chat web app using Webrtc,socket-io, nodejs and express",
   "main": "app.js",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.4",
     "express": "^4.17.1",
-    "socket.io": "^2.4.1"
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.1.0",
+    "mongoose": "^9.2.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.1",
+    "socket.io": "^2.5.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"
   },
   "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
     "watch": "nodemon --watch \"src/\" --exec \"node src/app.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
