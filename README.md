@@ -1,7 +1,7 @@
 # Zenference - Video Conferencing Platform
 Zen meetings, simplified.. 🍃
 
-A modern, feature-rich video conferencing application built with Node.js, WebRTC, and MongoDB. Features a clean, professional UI with comprehensive user authentication, email invitations, and real-time communication capabilities.
+A modern, feature-rich video conferencing application built with Node.js, Socket IO, WebRTC, and MongoDB. Features a clean, professional UI with comprehensive user authentication, email invitations, and real-time communication capabilities.
 
 ## 🌟 Features
 
