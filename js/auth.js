@@ -28,7 +28,8 @@ class AuthManager {
                     if (email && password && email.value.trim() && password.value.trim()) {
                         this.handleLogin();
                     }
-                } else if (registerForm && registerForm.style.display !== 'none') {
+                } 
+                else if (registerForm && registerForm.style.display !== 'none') {
                     const username = document.getElementById('register-username');
                     const email = document.getElementById('register-email');
                     const password = document.getElementById('register-password');
@@ -65,10 +66,10 @@ class AuthManager {
             if (data.success) {
                 if (data.requiresEmailConfirmation) {
                     this.showSuccess('Registration successful! Please check your email to confirm your account.');
-                    setTimeout(() => this.showLoginForm(), 2000);
+                    setTimeout(() => this.showLoginForm(), 2000); 
                 } else {
                     this.showSuccess('Registration successful! Please login to continue.');
-                    setTimeout(() => this.showLoginForm(), 1500);
+                    setTimeout(() => this.showLoginForm(), 1500); 
                 }
             } else {
                 this.showError(data.message || 'Registration failed');
@@ -97,7 +98,12 @@ class AuthManager {
             if (data.success) {
                 this.setAuthData(data.token, data.user);
                 this.showSuccess('Login successful! Redirecting...');
-                setTimeout(() => this.showMainApp(), 1500);
+                const storedToken = localStorage.getItem('authSession');
+                if (storedToken && JSON.parse(storedToken).token === data.token) {
+                    setTimeout(() => this.showMainApp(), 1500);
+                } else {
+                    this.showError('Failed to store authentication token');
+                }
             } else {
                 if (data.requiresEmailConfirmation) {
                     this.showError(data.message);
@@ -129,10 +135,10 @@ class AuthManager {
         this.token = token;
         this.user = user;
         const sessionData = {
-            token: token,
-            user: user,
-            sessionStart: new Date().toISOString(),
-            lastActivity: new Date().toISOString()
+            token: token,                                    
+            user: user,                                      
+            sessionStart: new Date().toISOString(),          
+            lastActivity: new Date().toISOString()           
         };
         localStorage.setItem('authSession', JSON.stringify(sessionData));
         console.log('Auth session stored:', sessionData);
@@ -142,8 +148,8 @@ class AuthManager {
         this.token = null;
         this.user = null;
         localStorage.removeItem('authSession');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('token');        
+        localStorage.removeItem('user');         
         this.clearInactivityTimer();
     }
     startInactivityTimer() {
@@ -181,8 +187,13 @@ class AuthManager {
     }
     setupActivityTracking() {
         const events = [
-            'mousedown', 'mousemove', 'keypress', 'scroll', 
-            'touchstart', 'click', 'keydown'
+            'mousedown',    
+            'mousemove',    
+            'keypress',     
+            'scroll',       
+            'touchstart',   
+            'click',        
+            'keydown'       
         ];
         const resetTimer = () => this.resetInactivityTimer();
         events.forEach(event => {
@@ -285,15 +296,18 @@ class AuthManager {
     showMainApp() {
         window.location.href = '/dashboard.html';
     }
-    showLoginForm() {
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            authContainer.style.display = 'flex';
-        }
-    }
     isAuthenticated() {
         const sessionData = localStorage.getItem('authSession');
-        return sessionData && sessionData !== 'null';
+        if (!sessionData || sessionData === 'null') {
+            return false;
+        }
+        try {
+            const parsed = JSON.parse(sessionData);
+            return parsed && parsed.token && parsed.user;
+        } catch (error) {
+            console.error('Error parsing session data:', error);
+            return false;
+        }
     }
     init() {
         const sessionData = localStorage.getItem('authSession');

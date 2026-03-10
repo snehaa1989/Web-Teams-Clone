@@ -1,4 +1,3 @@
-/* Translation Feature Styles */
 .translation-container {
     position: fixed;
     top: 80px;
@@ -13,7 +12,6 @@
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
-
 .translation-header {
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
@@ -22,21 +20,18 @@
     flex-direction: column;
     gap: 12px;
 }
-
 .translation-header h4 {
     margin: 0;
     color: #fff;
     font-size: 14px;
     font-weight: 600;
 }
-
 .language-selectors {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 }
-
 .language-selectors select {
     padding: 6px 10px;
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -47,18 +42,15 @@
     cursor: pointer;
     min-width: 120px;
 }
-
 .language-selectors select option {
     background: #333;
     color: #fff;
 }
-
 .language-arrow {
     color: rgba(255, 255, 255, 0.6);
     font-size: 12px;
     flex-shrink: 0;
 }
-
 .translation-header button {
     padding: 6px 12px;
     border: none;
@@ -69,16 +61,13 @@
     cursor: pointer;
     transition: all 0.3s ease;
 }
-
 .translation-header button:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
-
 .translation-header button.active {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
-
 .interim-text {
     padding: 10px 15px;
     color: rgba(255, 255, 255, 0.6);
@@ -87,13 +76,11 @@
     min-height: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .translation-list {
     max-height: 280px;
     overflow-y: auto;
     padding: 10px;
 }
-
 .translation-item {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
@@ -102,7 +89,6 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: slideInRight 0.3s ease;
 }
-
 @keyframes slideInRight {
     from {
         opacity: 0;
@@ -113,7 +99,6 @@
         transform: translateX(0);
     }
 }
-
 .translation-header-info {
     display: flex;
     align-items: center;
@@ -124,7 +109,6 @@
     flex-wrap: wrap;
     gap: 8px;
 }
-
 .source-lang, .target-lang {
     background: rgba(102, 126, 234, 0.3);
     color: #fff;
@@ -135,28 +119,23 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-
 .target-lang {
     background: rgba(245, 87, 108, 0.3);
 }
-
 .translation-arrow {
     color: rgba(255, 255, 255, 0.6);
     font-size: 10px;
     margin: 0 4px;
 }
-
 .translation-time {
     color: rgba(255, 255, 255, 0.4);
     font-size: 10px;
     font-weight: 400;
 }
-
 .original-text, .translated-text {
     margin-bottom: 6px;
     line-height: 1.4;
 }
-
 .lang-label {
     display: inline-block;
     background: rgba(255, 255, 255, 0.1);
@@ -169,48 +148,37 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-
 .original-text {
     color: rgba(255, 255, 255, 0.7);
     font-size: 12px;
 }
-
 .original-text .lang-label {
     background: rgba(102, 126, 234, 0.2);
     color: rgba(102, 126, 234, 1);
 }
-
 .translated-text {
     color: #fff;
     font-size: 14px;
     font-weight: 500;
 }
-
 .translated-text .lang-label {
     background: rgba(245, 87, 108, 0.2);
     color: rgba(245, 87, 108, 1);
 }
-
-/* Scrollbar styling for translation list */
 .translation-list::-webkit-scrollbar {
     width: 6px;
 }
-
 .translation-list::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
 }
-
 .translation-list::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
 }
-
 .translation-list::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.5);
 }
-
-/* Mobile responsive */
 @media (max-width: 768px) {
     .translation-container {
         position: fixed;
@@ -221,34 +189,26 @@
         width: auto;
         max-height: 300px;
     }
-    
     .translation-header {
         flex-direction: column;
         gap: 10px;
         align-items: stretch;
     }
-    
     .translation-header h4 {
         text-align: center;
     }
 }
-
-/* Minimized state */
 .translation-container.minimized {
     height: auto;
     max-height: 60px;
 }
-
 .translation-container.minimized .translation-list,
 .translation-container.minimized .interim-text {
     display: none;
 }
-
 .translation-container.minimized .translation-header {
     border-bottom: none;
 }
-
-/* Toggle button for minimize/restore */
 .minimize-toggle {
     position: absolute;
     top: 10px;
@@ -261,12 +221,9 @@
     padding: 4px 8px;
     font-size: 12px;
 }
-
 .minimize-toggle:hover {
     background: rgba(255, 255, 255, 0.3);
 }
-
-/* Language indicator */
 .language-indicator {
     display: inline-block;
     padding: 2px 6px;
@@ -276,19 +233,14 @@
     font-size: 10px;
     margin-left: 5px;
 }
-
-/* Participant-specific translation */
 .participant-translation {
     border-left: 3px solid #667eea;
     padding-left: 10px;
 }
-
 .participant-translation.speaking {
     border-left-color: #f5576c;
     background: rgba(245, 87, 108, 0.1);
 }
-
-/* Translation quality indicator */
 .translation-quality {
     display: inline-block;
     width: 8px;
@@ -296,20 +248,15 @@
     border-radius: 50%;
     margin-left: 5px;
 }
-
 .translation-quality.high {
     background: #4caf50;
 }
-
 .translation-quality.medium {
     background: #ff9800;
 }
-
 .translation-quality.low {
     background: #f44336;
 }
-
-/* Error handling styles */
 .translation-error {
     background: rgba(244, 67, 54, 0.9);
     border: 1px solid rgba(244, 67, 54, 0.5);
@@ -321,19 +268,16 @@
     gap: 10px;
     animation: slideInRight 0.3s ease;
 }
-
 .error-icon {
     font-size: 18px;
     flex-shrink: 0;
 }
-
 .error-message {
     color: #fff;
     font-size: 13px;
     flex: 1;
     line-height: 1.4;
 }
-
 .error-close {
     background: none;
     border: none;
@@ -344,12 +288,9 @@
     border-radius: 4px;
     transition: background 0.2s ease;
 }
-
 .error-close:hover {
     background: rgba(255, 255, 255, 0.2);
 }
-
-/* Manual input mode styles */
 .manual-input-container {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -360,7 +301,6 @@
     gap: 10px;
     align-items: center;
 }
-
 .manual-input-container input {
     flex: 1;
     padding: 10px;
@@ -372,16 +312,13 @@
     outline: none;
     transition: all 0.3s ease;
 }
-
 .manual-input-container input::placeholder {
     color: rgba(255, 255, 255, 0.6);
 }
-
 .manual-input-container input:focus {
     border-color: rgba(102, 126, 234, 0.5);
     background: rgba(255, 255, 255, 0.15);
 }
-
 .manual-input-container button {
     padding: 10px 15px;
     border: none;
@@ -393,17 +330,13 @@
     transition: all 0.3s ease;
     white-space: nowrap;
 }
-
 .manual-input-container button:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
-
 .manual-input-container button:active {
     transform: translateY(0);
 }
-
-/* Status indicator for translation mode */
 .translation-status {
     padding: 5px 10px;
     background: rgba(255, 255, 255, 0.1);
@@ -417,7 +350,6 @@
     justify-content: center;
     gap: 5px;
 }
-
 .status-dot {
     width: 8px;
     height: 8px;
@@ -425,17 +357,14 @@
     background: #4caf50;
     animation: pulse 2s infinite;
 }
-
 .status-dot.error {
     background: #f44336;
     animation: none;
 }
-
 .status-dot.manual {
     background: #ff9800;
     animation: none;
 }
-
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
@@ -444,14 +373,11 @@
         opacity: 0.5;
     }
 }
-
-/* Responsive adjustments for manual input */
 @media (max-width: 768px) {
     .manual-input-container {
         flex-direction: column;
         gap: 10px;
     }
-    
     .manual-input-container input,
     .manual-input-container button {
         width: 100%;

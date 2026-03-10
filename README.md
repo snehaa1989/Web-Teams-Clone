@@ -180,14 +180,14 @@ video-conferencing/
 - `GET /api/auth/profile` - Get user profile
 - `GET /api/auth/confirm-email/:token` - Confirm email address
 - `POST /api/auth/resend-confirmation` - Resend confirmation email
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password
 
 ### Meeting Management
 - `POST /api/zen/create` - Create new meeting
+- `POST /api/zen/schedule` - Schedule meeting
 - `POST /api/zen/send-invites` - Send meeting invitations
+- `GET /api/zen/my-scheduled` - Get user's scheduled meetings
 - `GET /api/zen/meeting/:zenId` - Get meeting details
-- `GET /api/zen/list` - List user meetings
+- `POST /api/meeting/upload-media` - Upload meeting media
 
 ## 📧 Email Features
 

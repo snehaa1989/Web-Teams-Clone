@@ -1,10 +1,14 @@
 const nodemailer = require('nodemailer');
+
 const emailConfig = {
-    service: 'gmail',
+    service: process.env.EMAIL_SERVICE || 'gmail',
     auth: {
-        user: 'springbootauth35@gmail.com',
-        pass: 'fdjgwewvxlpudcgr'
-    }
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+    },
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: process.env.EMAIL_SECURE === 'true'
 };
 const transporter = nodemailer.createTransport(emailConfig);
 const verifyEmailConfig = async () => {
@@ -18,7 +22,7 @@ const verifyEmailConfig = async () => {
     }
 };
 module.exports = {
-    transporter,
-    verifyEmailConfig,
-    emailConfig
+    transporter,        
+    verifyEmailConfig,   
+    emailConfig         
 };

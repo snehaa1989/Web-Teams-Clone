@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Zenference - Meeting Dashboard</title>
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+        <link rel='stylesheet' href='css/style.css' type="text/css">
+        <script src='/socket.io/socket.io.js'></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script type="module" src="js/auth.js"></script>
+        <script type="module" src='js/webrtc.js'></script>
+        <script type="module" src='js/events.js'></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.3.0/adapter.min.js" integrity="sha256-2qQheewaqnZlXJ3RJRghVUwD/3fD9HNqxh4C+zvgmF4=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src="js/meetingManager.js"></script>
+        <script src="js/dashboard.js"></script>
+    </head>
+    <body id="dark-mode">
+        <div id="meeting-dashboard">
+            <nav class="navbar fixed-top rounded-0 d-print-none glass-card" style="background: linear-gradient(90deg, var(--sea-blue) 0%, var(--sea-green) 50%, var(--light-pink) 100%); border-bottom: 2px solid var(--glass-border);">
+                <div class="text-white" id='meeting-topic' style="font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Zenference 🍃</div>
+                <div class="ml-auto d-flex align-items-center">
+                    <div class="user-info mr-3 text-white" id="user-info" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle mr-2" style="font-size: 20px;"></i>
+                            <div>
+                                <div class="user-name" id="user-name" style="font-weight: 700; font-size: 14px;">User</div>
+                                <div class="user-email" id="user-email" style="font-size: 12px; opacity: 0.8;">user@example.com</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm rounded-0 btn-no-effect text-white ml-2" id='logout-btn' title="Logout">
+                        <i class="fa fa-sign-out-alt"></i> <span class="d-none d-md-inline">Logout</span>
+                    </button>
+                    <div class="room-comm" hidden>
+                        <button class="btn btn-sm rounded-0 btn-no-effect" id='copy-room-link' onclick="alert(location.href +'     Share this URL!!!')">
+                            <i class="fa fa-link text-white"></i>
+                        </button>
+                        <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-video'>
+                            <i class="fa fa-video text-white"></i>
+                        </button>
+                        <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-darkmode'>
+                            <i class="fas fa-moon text-white"></i>
+                        </button>
+                        <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-screen-share'>
+                            <i class="fas fa-desktop text-white"></i>
+                        </button>
+                        <button class="btn btn-sm rounded-0 btn-no-effect" id='toggle-mute'>
+                            <i class="fa fa-volume-up text-white"></i>
+                        </button>
+                        <button class="btn btn-sm text-white pull-right  btn-no-effect" id='toggle-chat-pane'>
+                            <i class="fa fa-comment"></i> 
+                            <span class="badge badge-danger very-small font-weight-lighter" id='new-chat-notification' hidden>New</span>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+            <div class="container-fluid mt-5 pt-5">
+                <div class="row justify-content-center mt-5">
+                    <div class="col-md-8">
+                        <div class="card glass-card mb-4">
+                            <div class="card-body text-center">
+                                <h2 class="text-white mb-4" style="font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    <i class="fas fa-video mr-3"></i>Welcome to Zenference
+                                </h2>
+                                <p class="text-white mb-4" style="font-size: 18px; font-weight: 600;">
+                                    Zen meetings, simplified.. 🍃
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center mt-5 pt-4">
+                    <div class="col-md-10">
+                        <div class="row">
+                            <div class="col-md-4 mb-5">
+                                <div class="card glass-card h-100 hover-card">
+                                    <div class="card-body text-center">
+                                        <div class="mb-4">
+                                            <i class="fas fa-plus-circle" style="font-size: 48px; color: var(--sea-blue);"></i>
+                                        </div>
+                                        <h4 class="text-white mb-3" style="font-weight: 700;">Start a New Zen</h4>
+                                        <p class="text-white mb-4" style="font-weight: 600;">Create a new zen room and invite participants</p>
+                                        <a href="/start-zen-new.html" class="btn btn-primary glass-card" style="background: linear-gradient(135deg, var(--sea-blue) 0%, var(--sea-green) 50%, var(--light-pink) 100%); border: none; color: var(--light-text); font-weight: 700; text-decoration: none; display: inline-block;">
+                                            <i class="fas fa-video mr-2"></i>Start Zen
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-5">
+                                <div class="card glass-card h-100 hover-card">
+                                    <div class="card-body text-center">
+                                        <div class="mb-4">
+                                            <i class="fas fa-calendar-alt" style="font-size: 48px; color: var(--light-pink);"></i>
+                                        </div>
+                                        <h4 class="text-white mb-3" style="font-weight: 700;">Schedule a Zen</h4>
+                                        <p class="text-white mb-4" style="font-weight: 600;">Schedule a zen for later and send invites</p>
+                                        <button class="btn btn-primary glass-card" onclick="openScheduleModal()" style="background: linear-gradient(135deg, var(--light-pink) 0%, var(--ocean-cyan) 50%, var(--sea-blue) 100%); border: none; color: var(--light-text); font-weight: 700; text-decoration: none; display: inline-block;">
+                                            <i class="fas fa-calendar-plus mr-2"></i>Schedule Zen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-5">
+                                <div class="card glass-card h-100 hover-card">
+                                    <div class="card-body text-center">
+                                        <div class="mb-4">
+                                            <i class="fas fa-sign-in-alt" style="font-size: 48px; color: var(--sea-green);"></i>
+                                        </div>
+                                        <h4 class="text-white mb-3" style="font-weight: 700;">Join a Zen</h4>
+                                        <p class="text-white mb-4" style="font-weight: 600;">Enter zen ID or join with a link</p>
+                                        <a href="/join-zen.html" class="btn btn-primary glass-card" style="background: linear-gradient(135deg, var(--sea-green) 0%, var(--light-pink) 50%, var(--ocean-cyan) 100%); border: none; color: var(--light-text); font-weight: 700; text-decoration: none; display: inline-block;">
+                                            <i class="fas fa-door-open mr-2"></i>Join Zen
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6 mb-4">
+                                <div class="card glass-card">
+                                    <div class="card-body">
+                                        <h4 class="text-white mb-4" style="font-weight: 700;">
+                                            <i class="fas fa-history mr-2"></i>Recent Zen's
+                                        </h4>
+                                        <div id="recent-meetings" class="text-white">
+                                            <p class="text-center" style="font-weight: 600;">Loading recent meetings...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card glass-card">
+                                    <div class="card-body">
+                                        <h4 class="text-white mb-4" style="font-weight: 700;">
+                                            <i class="fas fa-calendar-check mr-2"></i>Upcoming Zen's
+                                        </h4>
+                                        <div id="upcoming-meetings" class="text-white">
+                                            <div id="scheduled-zens-list">
+                                                <p class="text-center" style="font-weight: 600;">Loading scheduled meetings...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid mt-5 pt-4" id='username-set' hidden>
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card glass-card">
+                            <div class="card-body">
+                                <button class="btn btn-sm btn-outline-light mb-3" onclick="backToDashboard()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; font-weight: 600;">
+                                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                                </button>
+                                <h3 class="text-white mb-4 text-center" style="font-weight: 700;">Join a Zen</h3>
+                                <div class="row mt-2">
+                                    <div class="col-12 text-center">
+                                        <span class="form-text small text-danger" id='err-msg-username'></span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="username" class="text-white font-weight-600">Your Name</label>
+                                    <input type="text" class="form-control glass-card" id='username' placeholder="Your Name" autocomplete="off" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text); font-weight: 700;">
+                                </div>
+                                <button class="btn btn-primary btn-block glass-card" id='enter-room' style="background: linear-gradient(135deg, var(--sea-green) 0%, var(--light-pink) 50%, var(--ocean-cyan) 100%); border: none; color: var(--light-text); font-weight: 700;">Join</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container room-comm" hidden>
+                <div class="row">
+                    <video class="local-video" id='local' volume='0' autoplay muted></video>
+                </div>
+                <div class="col-md-9 mt-3 mb-3 main">
+                    <div class="row" id='videos'></div>
+                </div>
+                <div class="container-fluid chat-col d-print-none" id='chat-pane' hidden>
+                    CHAT
+                    <div id='chat-messages'></div>
+                </div>
+                <textarea id='chat-input' class="form-control rounded-0 chat-box border-dark" rows='3' placeholder="Type here..." hidden></textarea>
+            </div>
+        </div>
+        <div class="modal fade" id="scheduleZenModal" tabindex="-1" role="dialog" aria-labelledby="scheduleZenModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content glass-card" style="background: var(--glass-bg); border: 1px solid var(--glass-border);">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title text-white" id="scheduleZenModalLabel" style="font-weight: 700;">
+                            <i class="fas fa-calendar-plus mr-2"></i>Schedule a Zen
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="scheduleZenForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="zenTopic" class="text-white font-weight-600">Zen Topic</label>
+                                        <input type="text" class="form-control glass-card" id="zenTopic" placeholder="Enter zen topic" required style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text);">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="zenDuration" class="text-white font-weight-600">Duration</label>
+                                        <select class="form-control glass-card" id="zenDuration" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text);">
+                                            <option value="30">30 minutes</option>
+                                            <option value="60" selected>1 hour</option>
+                                            <option value="90">1.5 hours</option>
+                                            <option value="120">2 hours</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="zenDate" class="text-white font-weight-600">Date</label>
+                                        <input type="date" class="form-control glass-card" id="zenDate" required style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text);">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="zenTime" class="text-white font-weight-600">Time</label>
+                                        <input type="time" class="form-control glass-card" id="zenTime" required style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text);">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="zenDescription" class="text-white font-weight-600">Description (Optional)</label>
+                                <textarea class="form-control glass-card" id="zenDescription" rows="3" placeholder="Add a description for your zen" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text);"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="inviteParticipants" class="text-white font-weight-600">Invite Participants</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control glass-card" id="inviteParticipants" placeholder="Enter email addresses or usernames (comma separated)" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--light-text);">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-light" id="addInvitesBtn">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Enter email addresses or usernames separated by commas</small>
+                                <div id="invitedList" class="mt-2"></div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="scheduleZenBtn">
+                            <i class="fas fa-calendar-check mr-2"></i>Schedule Zen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="footer glass-card mt-5 py-4">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <div class="text-white mb-3">
+                            <h4 class="mb-3" style="font-weight: 700;">Zenference</h4>
+                            <p class="mb-2" style="font-weight: 600;">Zen meetings, simplified.. 🍃</p>
+                        </div>
+                        <div class="footer-links mb-3">
+                            <a href="#" class="text-white mx-2" style="font-weight: 600;">About</a>
+                            <span class="text-white">•</span>
+                            <a href="#" class="text-white mx-2" style="font-weight: 600;">Privacy</a>
+                            <span class="text-white">•</span>
+                            <a href="#" class="text-white mx-2" style="font-weight: 600;">Terms</a>
+                            <span class="text-white">•</span>
+                            <a href="#" class="text-white mx-2" style="font-weight: 600;">Support</a>
+                        </div>
+                        <div class="social-links mb-3">
+                            <a href="#" class="text-white mx-2"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-white mx-2"><i class="fab fa-linkedin"></i></a>
+                            <a href="https://github.com/snehaa1989/Web-Teams-Clone" class="text-white mx-2"><i class="fab fa-github"></i></a>
+                        </div>
+                        <div class="copyright text-white" style="font-size: 14px; opacity: 0.8;">
+                            <p class="mb-0">&copy; 2024 Zenference. All rights reserved.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </body>
+</html>

@@ -1,8 +1,9 @@
 const express = require('express');
-const router = express.Router();
 const User = require('../models/User');
 const MeetingRoom = require('../models/MeetingRoom');
+const ScheduledZen = require('../models/ScheduledZen');
 const { protect } = require('../middleware/auth');
+const router = express.Router();
 router.post('/create', protect, async (req, res) => {
     try {
         const { title, description, settings } = req.body;
@@ -17,77 +18,76 @@ router.post('/create', protect, async (req, res) => {
             roomId: roomId,
             title: title,
             description: description || '',
-            host: req.user._id,
+            host: req.user._id,                    
             settings: {
-                allowScreenShare: settings?.allowScreenShare !== false,
-                allowRecording: settings?.allowRecording || false,
-                requirePassword: false,
-                password: '',
-                maxParticipants: 50,
-                enableChat: settings?.enableChat !== false,
-                enableFileShare: settings?.enableFileShare !== false,
-                waitingRoom: settings?.waitingRoom || false,
-                muteOnEntry: settings?.muteOnEntry || false,
-                videoOnEntry: settings?.videoOnEntry !== false
+                allowScreenShare: settings?.allowScreenShare !== false,     
+                allowRecording: settings?.allowRecording || false,       
+                requirePassword: false,                              
+                password: '',                                       
+                maxParticipants: 50,                               
+                enableChat: settings?.enableChat !== false,           
+                enableFileShare: settings?.enableFileShare !== false,     
+                waitingRoom: settings?.waitingRoom || false,           
+                muteOnEntry: settings?.muteOnEntry || false,           
+                videoOnEntry: settings?.videoOnEntry !== false          
             },
-            status: 'active'
+            status: 'active'                               
         });
         await room.save();
+        console.log('Meeting room created:', room);
         res.status(201).json({
             success: true,
             message: 'Meeting created successfully',
             room: {
-                roomId: room.roomId,
-                title: room.title,
-                description: room.description,
-                settings: room.settings,
-                status: room.status,
-                createdAt: room.createdAt
+                roomId: room.roomId,                    
+                title: room.title,                      
+                description: room.description,                
+                settings: room.settings,                  
+                status: room.status,                    
+                createdAt: room.createdAt                 
             }
         });
     } catch (error) {
+        console.error('Create meeting error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error while creating meeting'
         });
     }
 });
-router.post('/schedule', async (req, res) => {
+router.post('/schedule', protect, async (req, res) => {
     try {
-        const { topic, duration, date, time, description, host, participants } = req.body;
-        if (!topic || !date || !time || !host) {
+        const { topic, duration, date, time, description, participants } = req.body;
+        if (!topic || !date || !time) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields: topic, date, time, host'
+                message: 'Missing required fields: topic, date, time'
             });
         }
-        const zen = {
-            id: 'zen_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            topic,
-            duration: parseInt(duration) || 60,
-            date,
-            time,
-            description,
-            host: {
-                id: host.id || host._id,
-                username: host.username,
-                email: host.email
+        const zenId = 'zen_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const zen = new ScheduledZen({
+            zenId: zenId,
+            topic: topic,                                     
+            duration: parseInt(duration) || 60,              
+            date: date,                                      
+            time: time,                                       
+            description: description,                         
+            host: {                                          
+                id: req.user._id,
+                username: req.user.username,
+                email: req.user.email
             },
-            participants: participants || [],
-            status: 'scheduled',
-            createdAt: new Date().toISOString(),
-            meetingLink: `${req.protocol}://${req.get('host')}/meeting.html`
-        };
-        if (!global.scheduledZens) {
-            global.scheduledZens = [];
-        }
-        global.scheduledZens.push(zen);
-        console.log('Zen scheduled:', zen);
+            participants: participants || [],               
+            status: 'scheduled',                        
+            meetingLink: `${req.protocol}:
+        });
+        await zen.save();
+        console.log('Zen scheduled in MongoDB:', zen);
         res.status(201).json({
             success: true,
             message: 'Zen scheduled successfully',
-            zenId: zen.id,
-            zen: zen
+            zenId: zen.zenId,                          
+            zen: zen                                   
         });
     } catch (error) {
         console.error('Schedule zen error:', error);
@@ -97,31 +97,38 @@ router.post('/schedule', async (req, res) => {
         });
     }
 });
-router.post('/send-invites', async (req, res) => {
+router.post('/send-invites', protect, async (req, res) => {
     try {
-        const { zenId, zenData, participants } = req.body;
+        const { zenId, participants } = req.body;
         if (!participants || participants.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: 'No participants to invite'
             });
         }
+        const zen = await ScheduledZen.findOne({ zenId });
+        if (!zen) {
+            return res.status(404).json({
+                success: false,
+                message: 'Zen not found'
+            });
+        }
         console.log('Sending invitations for zen:', zenId);
-        console.log('Zen details:', zenData);
+        console.log('Zen details from MongoDB:', zen);
         console.log('Participants:', participants);
         const invitations = participants.map(participant => {
             const isEmail = participant.includes('@');
             const inviteType = isEmail ? 'email' : 'username';
             return {
-                recipient: participant,
-                type: inviteType,
-                zenId: zenId,
-                topic: zenData.topic,
-                date: zenData.date,
-                time: zenData.time,
-                duration: zenData.duration,
-                meetingLink: zenData.meetingLink,
-                sentAt: new Date().toISOString()
+                recipient: participant,                         
+                type: inviteType,                           
+                zenId: zen.zenId,                              
+                topic: zen.topic,                        
+                date: zen.date,                           
+                time: zen.time,                           
+                duration: zen.duration,                       
+                meetingLink: zen.meetingLink,               
+                sentAt: new Date().toISOString()          
             };
         });
         console.log('Invitations prepared:', invitations);
@@ -131,16 +138,16 @@ router.post('/send-invites', async (req, res) => {
         for (const invitation of invitations) {
             if (invitation.type === 'email') {
                 const result = await emailService.sendMeetingInvitationEmail(
-                    invitation.recipient,
-                    invitation.recipient.split('@')[0], 
-                    invitation.meetingLink || `http://localhost:3000/meeting.html`,
-                    invitation.topic,
+                    invitation.recipient,                     
+                    invitation.recipient.split('@')[0],          
+                    invitation.meetingLink || `http:
+                    invitation.topic,                           
                     {
-                        date: invitation.date,
-                        time: invitation.time,
-                        duration: invitation.duration,
-                        host: zenData.host.username,
-                        zenId: invitation.zenId
+                        date: invitation.date,               
+                        time: invitation.time,               
+                        duration: invitation.duration,           
+                        host: zen.host.username,        
+                        zenId: invitation.zenId              
                     }
                 );
                 emailResults.push({
@@ -154,8 +161,8 @@ router.post('/send-invites', async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Invitations sent successfully',
-            invitations: invitations,
-            emailResults: emailResults
+            invitations: invitations,                         
+            emailResults: emailResults                        
         });
     } catch (error) {
         console.error('Send invites error:', error);
@@ -165,12 +172,20 @@ router.post('/send-invites', async (req, res) => {
         });
     }
 });
-router.get('/my-scheduled', async (req, res) => {
+router.get('/my-scheduled', protect, async (req, res) => {
     try {
-        const scheduledZens = global.scheduledZens || [];
+        const scheduledZens = await ScheduledZen.find({
+            $or: [
+                { 'host.id': req.user._id },                    
+                { participants: req.user.email }                      
+            ],
+            status: { $ne: 'cancelled' }                       
+        })
+        .sort({ createdAt: -1 })                    
+        .limit(50);                               
         res.status(200).json({
             success: true,
-            zens: scheduledZens
+            zens: scheduledZens                       
         });
     } catch (error) {
         console.error('Get scheduled zens error:', error);
@@ -180,26 +195,33 @@ router.get('/my-scheduled', async (req, res) => {
         });
     }
 });
-router.get('/:zenId', async (req, res) => {
+router.get('/:zenId', protect, async (req, res) => {
     try {
         const { zenId } = req.params;
-        const scheduledZens = global.scheduledZens || [];
-        const zen = scheduledZens.find(z => z.id === zenId);
+        const zen = await ScheduledZen.findOne({ zenId });
         if (!zen) {
             return res.status(404).json({
                 success: false,
                 message: 'Zen not found'
             });
         }
+        const isHost = zen.host.id.toString() === req.user._id.toString();
+        const isInvited = zen.participants.includes(req.user.email);
+        if (!isHost && !isInvited) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied - you are not the host or an invited participant'
+            });
+        }
         res.status(200).json({
             success: true,
-            zen: zen
+            zen: zen                                   
         });
     } catch (error) {
-        console.error('Get zen details error:', error);
+        console.error('Get zen by ID error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching zen details'
+            message: 'Server error while fetching zen'
         });
     }
 });

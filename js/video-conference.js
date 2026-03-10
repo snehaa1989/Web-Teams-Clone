@@ -7,13 +7,25 @@ class VideoConferenceManager {
         this.roomId = null;
         this.userId = null;
         this.isScreenSharing = false;
+        this.screenShareAudioEnabled = true;
+        this.originalAudioTrack = null;
+        this.screenShareAudioTrack = null;
         this.isRecording = false;
         this.mediaRecorder = null;
         this.recordedChunks = [];
+        this.recordingStartTime = null;
+        this.recordingTimer = null;
+        this.recordingDuration = 0;
         this.participants = new Map();
         this.audioContext = null;
         this.virtualBackgroundProcessor = null;
         this.hasJoinedRoom = false;
+        this.virtualBackgroundEnabled = false;
+        this.selectedBackground = 'none';
+        this.originalVideoTrack = null;
+        this.processedVideoTrack = null;
+        this.virtualBackgroundCanvas = null;
+        this.virtualBackgroundContext = null;
         this.proximityDetector = null;
         this.isProximityDetectionEnabled = false;
         this.config = {
@@ -128,6 +140,10 @@ class VideoConferenceManager {
             this.setupSocketEventHandlers();
             console.log('Setting up audio context...');
             this.setupAudioContext();
+            console.log('Setting up virtual background...');
+            this.initializeVirtualBackground();
+            console.log('Setting up screen share audio toggle...');
+            this.setupScreenShareAudioToggle();
             console.log('Video conference initialized successfully');
             console.log('=== VIDEO CONFERENCE INITIALIZATION COMPLETE ===');
             return true;
@@ -276,6 +292,15 @@ class VideoConferenceManager {
         this.socket.on('room-participants', (data) => {
             this.handleRoomParticipants(data);
         });
+        this.socket.on('participant-connection-quality', (data) => {
+            this.handleParticipantConnectionQuality(data);
+        });
+        this.socket.on('recording-started', (data) => {
+            this.handleRecordingStarted(data);
+        });
+        this.socket.on('recording-stopped', (data) => {
+            this.handleRecordingStopped(data);
+        });
     }
     joinRoom() {
         console.log('=== CLIENT JOINING ROOM ===');
@@ -319,6 +344,10 @@ class VideoConferenceManager {
         participantItem.innerHTML = `
             <div class="participant-info">
                 <span class="participant-name">${username || 'User ' + userId}</span>
+                <div class="connection-status">
+                    <span class="status-dot" id="status-${userId}"></span>
+                    <span class="status-text" id="status-text-${userId}">Connecting...</span>
+                </div>
                 <div class="participant-status-icons">
                     <i class="fas video-icon fa-video-slash" style="color: #ff4444; margin-right: 5px;"></i>
                     <i class="fas audio-icon fa-microphone-slash" style="color: #ff4444;"></i>
@@ -332,7 +361,421 @@ class VideoConferenceManager {
         `;
         participantsList.appendChild(participantItem);
         console.log('Added participant to list:', username);
+        this.updateParticipantConnectionStatus(userId, 'connecting');
     }
+
+updateParticipantConnectionStatus(userId, status) {
+        const statusDot = document.getElementById(`status-${userId}`);
+        const statusText = document.getElementById(`status-text-${userId}`);
+        
+        if (!statusDot || !statusText) {
+            console.log('Status elements not found for user:', userId);
+            return;
+        }
+
+        statusDot.className = 'status-dot';
+        
+        switch(status) {
+            case 'excellent':
+                statusDot.classList.add('excellent');
+                statusText.textContent = 'Excellent';
+                break;
+            case 'good':
+                statusDot.classList.add('good');
+                statusText.textContent = 'Good';
+                break;
+            case 'poor':
+                statusDot.classList.add('poor');
+                statusText.textContent = 'Poor';
+                break;
+            case 'disconnected':
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Disconnected';
+                break;
+            case 'connecting':
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Connecting...';
+                break;
+            default:
+                statusDot.classList.add('good');
+                statusText.textContent = 'Good';
+        }
+    }
+
+    calculateConnectionQuality(peerConnection) {
+        try {
+            const stats = peerConnection.getStats();
+            let totalPacketsLost = 0;
+            let totalPacketsReceived = 0;
+            let totalRoundTripTime = 0;
+            let measurements = 0;
+
+            stats.forEach(report => {
+                if (report.type === 'inbound-rtp' && report.mediaType === 'video') {
+                    totalPacketsLost += report.packetsLost || 0;
+                    totalPacketsReceived += report.packetsReceived || 0;
+                }
+                if (report.type === 'remote-candidate') {
+                    totalRoundTripTime += report.roundTripTime || 0;
+                    measurements++;
+                }
+            });
+
+            const packetLossRate = totalPacketsReceived > 0 ? 
+                (totalPacketsLost / (totalPacketsReceived + totalPacketsLost)) * 100 : 0;
+            
+            const avgRoundTripTime = measurements > 0 ? totalRoundTripTime / measurements : 0;
+
+            if (packetLossRate < 1 && avgRoundTripTime < 100) {
+                return 'excellent';
+            } else if (packetLossRate < 3 && avgRoundTripTime < 200) {
+                return 'good';
+            } else if (packetLossRate < 10 && avgRoundTripTime < 500) {
+                return 'poor';
+            } else {
+                return 'disconnected';
+            }
+        } catch (error) {
+            console.error('Error calculating connection quality:', error);
+            return 'good';
+        }
+    }
+
+    startConnectionQualityMonitoring(userId, peerConnection) {
+        const qualityInterval = setInterval(async () => {
+            if (!peerConnection || peerConnection.connectionState === 'closed' || 
+                peerConnection.connectionState === 'disconnected' || 
+                peerConnection.connectionState === 'failed') {
+                clearInterval(qualityInterval);
+                this.updateParticipantConnectionStatus(userId, 'disconnected');
+                return;
+            }
+
+            if (peerConnection.connectionState === 'connected') {
+                const quality = this.calculateConnectionQuality(peerConnection);
+                this.updateParticipantConnectionStatus(userId, quality);
+                
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('connection-quality', {
+                        userId: userId,
+                        quality: quality,
+                        timestamp: new Date()
+                    });
+                }
+            }
+        }, 5000);
+
+        return qualityInterval;
+    }
+
+    handleParticipantConnectionQuality(data) {
+        console.log('Received connection quality update:', data);
+        this.updateParticipantConnectionStatus(data.userId, data.quality);
+    }
+
+    handleRecordingStarted(data) {
+        console.log('Recording started:', data);
+        this.showRecordingIndicator(true);
+        this.startRecordingTimer();
+        
+        if (data.startedByUsername) {
+            this.showRecordingNotification(`Recording started by ${data.startedByUsername}`);
+        }
+    }
+
+    handleRecordingStopped(data) {
+        console.log('Recording stopped:', data);
+        this.showRecordingIndicator(false);
+        this.stopRecordingTimer();
+        
+        if (data.stoppedByUsername) {
+            this.showRecordingNotification(`Recording stopped by ${data.stoppedByUsername}`);
+        }
+    }
+
+    showRecordingIndicator(show) {
+        const indicator = document.getElementById('recording-indicator');
+        if (indicator) {
+            indicator.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    startRecordingTimer() {
+        this.recordingStartTime = Date.now();
+        this.recordingDuration = 0;
+        
+        this.recordingTimer = setInterval(() => {
+            this.recordingDuration = Math.floor((Date.now() - this.recordingStartTime) / 1000);
+            this.updateRecordingTimerDisplay();
+        }, 1000);
+    }
+
+    stopRecordingTimer() {
+        if (this.recordingTimer) {
+            clearInterval(this.recordingTimer);
+            this.recordingTimer = null;
+        }
+    }
+
+    updateRecordingTimerDisplay() {
+        const timerElement = document.getElementById('recording-timer');
+        if (timerElement) {
+            const hours = Math.floor(this.recordingDuration / 3600);
+            const minutes = Math.floor((this.recordingDuration % 3600) / 60);
+            const seconds = this.recordingDuration % 60;
+            
+            const display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerElement.textContent = display;
+        }
+    }
+
+    showRecordingNotification(message) {
+        console.log('Recording notification:', message);
+    }
+
+    initializeVirtualBackground() {
+        const virtualBgBtn = document.getElementById('virtual-bg-btn');
+        const virtualBgModal = document.getElementById('virtual-bg-modal');
+        const closeVirtualBg = document.getElementById('close-virtual-bg');
+        const applyVirtualBg = document.getElementById('apply-virtual-bg');
+
+        if (virtualBgBtn) {
+            virtualBgBtn.addEventListener('click', () => {
+                this.showVirtualBackgroundModal();
+            });
+        }
+
+        if (closeVirtualBg) {
+            closeVirtualBg.addEventListener('click', () => {
+                this.hideVirtualBackgroundModal();
+            });
+        }
+
+        if (applyVirtualBg) {
+            applyVirtualBg.addEventListener('click', () => {
+                this.applyVirtualBackground();
+            });
+        }
+
+        this.setupBackgroundOptionListeners();
+    }
+
+    setupScreenShareAudioToggle() {
+        const screenBtn = document.getElementById('screen-btn');
+        if (screenBtn) {
+            screenBtn.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                this.toggleScreenShareAudio();
+            });
+        }
+    }
+
+    showVirtualBackgroundModal() {
+        const modal = document.getElementById('virtual-bg-modal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    }
+
+    hideVirtualBackgroundModal() {
+        const modal = document.getElementById('virtual-bg-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    setupBackgroundOptionListeners() {
+        const bgOptions = document.querySelectorAll('.bg-option');
+        bgOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                bgOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                this.selectedBackground = option.dataset.bg;
+            });
+        });
+    }
+
+    async applyVirtualBackground() {
+        console.log('Applying virtual background:', this.selectedBackground);
+        
+        if (this.selectedBackground === 'none') {
+            await this.disableVirtualBackground();
+        } else {
+            await this.enableVirtualBackground(this.selectedBackground);
+        }
+        
+        this.hideVirtualBackgroundModal();
+    }
+
+    async enableVirtualBackground(backgroundType) {
+        try {
+            if (!this.localStream) {
+                console.error('No local stream available');
+                return;
+            }
+
+            const videoTrack = this.localStream.getVideoTracks()[0];
+            if (!videoTrack) {
+                console.error('No video track available');
+                return;
+            }
+
+            if (!this.originalVideoTrack) {
+                this.originalVideoTrack = videoTrack.clone();
+            }
+
+            if (!this.virtualBackgroundCanvas) {
+                this.virtualBackgroundCanvas = document.createElement('canvas');
+                this.virtualBackgroundCanvas.width = 640;
+                this.virtualBackgroundCanvas.height = 480;
+                this.virtualBackgroundContext = this.virtualBackgroundCanvas.getContext('2d');
+            }
+
+            this.virtualBackgroundEnabled = true;
+            this.startVirtualBackgroundProcessing(videoTrack, backgroundType);
+            
+            console.log('Virtual background enabled:', backgroundType);
+        } catch (error) {
+            console.error('Error enabling virtual background:', error);
+        }
+    }
+
+    async disableVirtualBackground() {
+        try {
+            if (!this.virtualBackgroundEnabled) {
+                return;
+            }
+
+            this.virtualBackgroundEnabled = false;
+
+            if (this.processedVideoTrack) {
+                this.processedVideoTrack.stop();
+                this.processedVideoTrack = null;
+            }
+
+            if (this.originalVideoTrack && this.localStream) {
+                const videoTrack = this.localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    this.localStream.removeTrack(videoTrack);
+                    videoTrack.stop();
+                }
+                
+                this.localStream.addTrack(this.originalVideoTrack);
+                
+                this.peers.forEach((peerConnection, userId) => {
+                    const sender = peerConnection.getSenders().find(
+                        s => s.track && s.track.kind === 'video'
+                    );
+                    if (sender) {
+                        sender.replaceTrack(this.originalVideoTrack);
+                    }
+                });
+            }
+
+            const localVideo = document.getElementById('local');
+            if (localVideo) {
+                localVideo.srcObject = this.localStream;
+            }
+
+            console.log('Virtual background disabled');
+        } catch (error) {
+            console.error('Error disabling virtual background:', error);
+        }
+    }
+
+    startVirtualBackgroundProcessing(videoTrack, backgroundType) {
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = new MediaStream([videoTrack]);
+        videoElement.play();
+
+        const processFrame = () => {
+            if (!this.virtualBackgroundEnabled) {
+                return;
+            }
+
+            this.virtualBackgroundContext.drawImage(videoElement, 0, 0, 640, 480);
+            
+            if (backgroundType === 'blur') {
+                this.applyBlurBackground();
+            } else if (backgroundType !== 'none') {
+                this.applyCustomBackground(backgroundType);
+            }
+
+            requestAnimationFrame(processFrame);
+        };
+
+        this.createProcessedVideoStream();
+        processFrame();
+    }
+
+    applyBlurBackground() {
+        const imageData = this.virtualBackgroundContext.getImageData(0, 0, 640, 480);
+        const data = imageData.data;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            
+            if (brightness > 100) {
+                data[i] = data[i] * 0.9;
+                data[i + 1] = data[i + 1] * 0.9;
+                data[i + 2] = data[i + 2] * 0.9;
+            } else {
+                data[i] = data[i] * 0.3;
+                data[i + 1] = data[i + 1] * 0.3;
+                data[i + 2] = data[i + 2] * 0.3;
+            }
+        }
+        
+        this.virtualBackgroundContext.putImageData(imageData, 0, 0);
+    }
+
+    applyCustomBackground(backgroundType) {
+        const gradients = {
+            gradient1: ['#667eea', '#764ba2'],
+            gradient2: ['#f093fb', '#f5576c'],
+            gradient3: ['#4facfe', '#00f2fe']
+        };
+
+        if (gradients[backgroundType]) {
+            const gradient = this.virtualBackgroundContext.createLinearGradient(0, 0, 640, 480);
+            gradient.addColorStop(0, gradients[backgroundType][0]);
+            gradient.addColorStop(1, gradients[backgroundType][1]);
+            this.virtualBackgroundContext.fillStyle = gradient;
+            this.virtualBackgroundContext.fillRect(0, 0, 640, 480);
+        }
+
+        this.virtualBackgroundContext.globalCompositeOperation = 'screen';
+        this.virtualBackgroundContext.drawImage(this.virtualBackgroundCanvas, 0, 0, 640, 480);
+        this.virtualBackgroundContext.globalCompositeOperation = 'source-over';
+    }
+
+    createProcessedVideoStream() {
+        const processedStream = this.virtualBackgroundCanvas.captureStream(30);
+        this.processedVideoTrack = processedStream.getVideoTracks()[0];
+        
+        if (this.localStream) {
+            const videoTrack = this.localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                this.localStream.removeTrack(videoTrack);
+                this.localStream.addTrack(this.processedVideoTrack);
+                
+                this.peers.forEach((peerConnection, userId) => {
+                    const sender = peerConnection.getSenders().find(
+                        s => s.track && s.track.kind === 'video'
+                    );
+                    if (sender) {
+                        sender.replaceTrack(this.processedVideoTrack);
+                    }
+                });
+            }
+        }
+
+        const localVideo = document.getElementById('local');
+        if (localVideo) {
+            localVideo.srcObject = this.localStream;
+        }
+    }
+
 pinVideo(userId) {
     const participantVideo = document.querySelector(`[data-user-id="${userId}"] .participant-video`);
     if (!participantVideo) return;
@@ -549,9 +992,13 @@ async handleUserJoined(data) {
         };
         peerConnection.onconnectionstatechange = () => {
             console.log('Connection state with', userId, ':', peerConnection.connectionState);
-            if (peerConnection.connectionState === 'disconnected' || 
-                peerConnection.connectionState === 'failed' || 
-                peerConnection.connectionState === 'closed') {
+            if (peerConnection.connectionState === 'connected') {
+                this.updateParticipantConnectionStatus(userId, 'good');
+                this.startConnectionQualityMonitoring(userId, peerConnection);
+            } else if (peerConnection.connectionState === 'disconnected' || 
+                       peerConnection.connectionState === 'failed' || 
+                       peerConnection.connectionState === 'closed') {
+                this.updateParticipantConnectionStatus(userId, 'disconnected');
                 this.removePeer(userId);
             }
         };
@@ -661,6 +1108,37 @@ addRemoteVideo(userId, stream) {
         }
         console.log('Remote video addition complete for user:', userId);
     }
+    handleRemoteScreenShare(data) {
+        console.log('=== REMOTE SCREEN SHARE STARTED ===');
+        console.log('User:', data.username, 'with audio:', data.withAudio);
+        
+        const participantInfo = document.querySelector(`#wrapper-${data.userId} .participant-info`);
+        if (participantInfo) {
+            const screenShareIndicator = participantInfo.querySelector('.screen-share-indicator');
+            if (!screenShareIndicator) {
+                const indicator = document.createElement('div');
+                indicator.className = 'screen-share-indicator';
+                indicator.innerHTML = `<i class="fas fa-desktop"></i>`;
+                if (data.withAudio) {
+                    indicator.innerHTML += `<i class="fas fa-volume-up"></i>`;
+                }
+                participantInfo.appendChild(indicator);
+            }
+        }
+    }
+    
+    handleRemoteScreenShareStopped(data) {
+        console.log('=== REMOTE SCREEN SHARE STOPPED ===');
+        console.log('User:', data.username);
+        
+        const participantInfo = document.querySelector(`#wrapper-${data.userId} .participant-info`);
+        if (participantInfo) {
+            const screenShareIndicator = participantInfo.querySelector('.screen-share-indicator');
+            if (screenShareIndicator) {
+                screenShareIndicator.remove();
+            }
+        }
+    }
     async toggleVideo() {
         if (this.localStream) {
             const videoTrack = this.localStream.getVideoTracks()[0];
@@ -697,59 +1175,247 @@ addRemoteVideo(userId, stream) {
     }
     async startScreenShare() {
         try {
-            this.screenShareStream = await navigator.mediaDevices.getDisplayMedia({
+            console.log('=== STARTING SCREEN SHARE WITH AUDIO ===');
+            console.log('Screen share audio enabled:', this.screenShareAudioEnabled);
+            
+            let constraints = {
                 video: {
                     cursor: 'always'
-                },
-                audio: true
+                }
+            };
+
+            if (this.screenShareAudioEnabled) {
+                constraints.audio = true;
+            }
+
+            this.screenShareStream = await navigator.mediaDevices.getDisplayMedia(constraints);
+            
+            console.log('Screen share stream obtained:', {
+                hasVideo: this.screenShareStream.getVideoTracks().length > 0,
+                hasAudio: this.screenShareStream.getAudioTracks().length > 0,
+                videoTracks: this.screenShareStream.getVideoTracks().length,
+                audioTracks: this.screenShareStream.getAudioTracks().length
             });
+
             const videoTrack = this.screenShareStream.getVideoTracks()[0];
+            const audioTrack = this.screenShareStream.getAudioTracks()[0];
+
+            if (audioTrack && this.screenShareAudioEnabled) {
+                this.screenShareAudioTrack = audioTrack;
+                this.originalAudioTrack = this.localStream.getAudioTracks()[0];
+                
+                console.log('Screen share audio track found:', {
+                    enabled: audioTrack.enabled,
+                    muted: audioTrack.muted,
+                    label: audioTrack.label
+                });
+            }
+
             this.peers.forEach((peerConnection, userId) => {
-                const sender = peerConnection.getSenders().find(
+                const videoSender = peerConnection.getSenders().find(
                     s => s.track && s.track.kind === 'video'
                 );
-                if (sender) {
-                    sender.replaceTrack(videoTrack);
+                if (videoSender) {
+                    videoSender.replaceTrack(videoTrack);
+                    console.log('Replaced video track for peer:', userId);
+                }
+
+                if (audioTrack && this.screenShareAudioEnabled) {
+                    const audioSender = peerConnection.getSenders().find(
+                        s => s.track && s.track.kind === 'audio'
+                    );
+                    if (audioSender) {
+                        audioSender.replaceTrack(audioTrack);
+                        console.log('Replaced audio track for peer:', userId);
+                    }
                 }
             });
+
             const localVideo = document.getElementById('local');
             if (localVideo) {
                 localVideo.srcObject = this.screenShareStream;
             }
+
             this.isScreenSharing = true;
             this.updateScreenShareButton(true);
+            
             this.socket.emit('screen-share-started', {
-                userId: this.userId
+                userId: this.userId,
+                withAudio: this.screenShareAudioEnabled && !!audioTrack
             });
+
             videoTrack.onended = () => {
+                console.log('Screen share ended by user');
                 this.stopScreenShare();
             };
+
+            if (audioTrack) {
+                audioTrack.onended = () => {
+                    console.log('Screen share audio ended');
+                };
+            }
+
+            console.log('=== SCREEN SHARE STARTED SUCCESSFULLY ===');
         } catch (error) {
+            console.error('=== SCREEN SHARE ERROR ===');
             console.error('Error starting screen share:', error);
+            
+            if (error.name === 'NotAllowedError') {
+                console.log('User denied screen sharing permission');
+                this.showScreenShareError('Screen sharing permission denied');
+            } else if (error.name === 'NotSupportedError') {
+                console.log('Screen sharing not supported in this browser');
+                this.showScreenShareError('Screen sharing not supported in this browser');
+            } else if (error.name === 'TypeError' && error.message.includes('audio')) {
+                console.log('Audio capture not available, trying video only');
+                this.screenShareAudioEnabled = false;
+                await this.startScreenShareVideoOnly();
+            } else {
+                this.showScreenShareError('Failed to start screen sharing: ' + error.message);
+            }
         }
+    }
+
+    async startScreenShareVideoOnly() {
+        try {
+            console.log('=== STARTING SCREEN SHARE VIDEO ONLY ===');
+            
+            this.screenShareStream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    cursor: 'always'
+                },
+                audio: false
+            });
+
+            const videoTrack = this.screenShareStream.getVideoTracks()[0];
+
+            this.peers.forEach((peerConnection, userId) => {
+                const videoSender = peerConnection.getSenders().find(
+                    s => s.track && s.track.kind === 'video'
+                );
+                if (videoSender) {
+                    videoSender.replaceTrack(videoTrack);
+                    console.log('Replaced video track for peer:', userId);
+                }
+            });
+
+            const localVideo = document.getElementById('local');
+            if (localVideo) {
+                localVideo.srcObject = this.screenShareStream;
+            }
+
+            this.isScreenSharing = true;
+            this.updateScreenShareButton(true);
+            
+            this.socket.emit('screen-share-started', {
+                userId: this.userId,
+                withAudio: false
+            });
+
+            videoTrack.onended = () => {
+                console.log('Screen share ended by user');
+                this.stopScreenShare();
+            };
+
+            console.log('=== SCREEN SHARE VIDEO ONLY STARTED ===');
+        } catch (error) {
+            console.error('Error starting screen share video only:', error);
+            this.showScreenShareError('Failed to start screen sharing: ' + error.message);
+        }
+    }
+
+    showScreenShareError(message) {
+        console.error('Screen share error:', message);
+        const errorElement = document.getElementById('screen-share-error');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        } else {
+            alert(message);
+        }
+    }
+
+    toggleScreenShareAudio() {
+        this.screenShareAudioEnabled = !this.screenShareAudioEnabled;
+        console.log('Screen share audio toggled:', this.screenShareAudioEnabled);
+        
+        if (this.isScreenSharing) {
+            this.updateScreenShareAudio();
+        }
+        
+        this.updateScreenShareButton();
+    }
+
+    updateScreenShareAudio() {
+        if (!this.isScreenSharing) return;
+
+        this.peers.forEach((peerConnection, userId) => {
+            const audioSender = peerConnection.getSenders().find(
+                s => s.track && s.track.kind === 'audio'
+            );
+            
+            if (this.screenShareAudioEnabled && this.screenShareAudioTrack) {
+                if (audioSender) {
+                    audioSender.replaceTrack(this.screenShareAudioTrack);
+                    console.log('Enabled screen share audio for peer:', userId);
+                }
+            } else {
+                if (audioSender && this.originalAudioTrack) {
+                    audioSender.replaceTrack(this.originalAudioTrack);
+                    console.log('Restored original audio for peer:', userId);
+                }
+            }
+        });
     }
     async stopScreenShare() {
         if (this.screenShareStream) {
-            this.screenShareStream.getTracks().forEach(track => track.stop());
+            console.log('=== STOPPING SCREEN SHARE ===');
+            
+            this.screenShareStream.getTracks().forEach(track => {
+                console.log('Stopping track:', track.kind, track.label);
+                track.stop();
+            });
+            
             const videoTrack = this.localStream.getVideoTracks()[0];
+            
             this.peers.forEach((peerConnection, userId) => {
-                const sender = peerConnection.getSenders().find(
+                const videoSender = peerConnection.getSenders().find(
                     s => s.track && s.track.kind === 'video'
                 );
-                if (sender) {
-                    sender.replaceTrack(videoTrack);
+                if (videoSender && videoTrack) {
+                    videoSender.replaceTrack(videoTrack);
+                    console.log('Restored video track for peer:', userId);
+                }
+
+                const audioSender = peerConnection.getSenders().find(
+                    s => s.track && s.track.kind === 'audio'
+                );
+                if (audioSender && this.originalAudioTrack) {
+                    audioSender.replaceTrack(this.originalAudioTrack);
+                    console.log('Restored original audio for peer:', userId);
                 }
             });
+            
             const localVideo = document.getElementById('local');
             if (localVideo) {
                 localVideo.srcObject = this.localStream;
             }
+            
             this.screenShareStream = null;
+            this.screenShareAudioTrack = null;
+            this.originalAudioTrack = null;
             this.isScreenSharing = false;
+            
             this.updateScreenShareButton(false);
+            
             this.socket.emit('screen-share-stopped', {
                 userId: this.userId
             });
+            
+            console.log('=== SCREEN SHARE STOPPED ===');
         }
     }
     async startRecording() {
@@ -891,6 +1557,16 @@ addRemoteVideo(userId, stream) {
             this.mediaRecorder.start();
             this.isRecording = true;
             this.updateRecordingButton(true);
+            
+            if (this.socket && this.socket.connected) {
+                this.socket.emit('start-recording', {
+                    roomId: this.roomId,
+                    userId: this.userId
+                });
+            }
+            
+            this.showRecordingIndicator(true);
+            this.startRecordingTimer();
         } catch (error) {
             console.error('Error starting recording:', error);
         }
@@ -900,6 +1576,16 @@ addRemoteVideo(userId, stream) {
             this.mediaRecorder.stop();
             this.isRecording = false;
             this.updateRecordingButton(false);
+            
+            if (this.socket && this.socket.connected) {
+                this.socket.emit('stop-recording', {
+                    roomId: this.roomId,
+                    userId: this.userId
+                });
+            }
+            
+            this.showRecordingIndicator(false);
+            this.stopRecordingTimer();
         }
     }
     saveRecording() {
@@ -1167,9 +1853,22 @@ addRemoteVideo(userId, stream) {
     updateScreenShareButton(isSharing) {
         const button = document.getElementById('screen-btn');
         if (button) {
-            button.innerHTML = isSharing ? 
-                '<i class="fas fa-stop"></i>' : 
-                '<i class="fas fa-desktop"></i>';
+            let icon = '<i class="fas fa-desktop"></i>';
+            let audioIndicator = '';
+            
+            if (isSharing) {
+                icon = '<i class="fas fa-stop"></i>';
+                if (this.screenShareAudioEnabled && this.screenShareAudioTrack) {
+                    audioIndicator = '<span class="screen-share-audio-indicator"><i class="fas fa-volume-up"></i></span>';
+                } else if (!this.screenShareAudioEnabled) {
+                    audioIndicator = '<span class="screen-share-audio-indicator muted"><i class="fas fa-volume-mute"></i></span>';
+                }
+            }
+            
+            button.innerHTML = icon + audioIndicator;
+            button.title = isSharing ? 
+                'Stop Screen Sharing (Right-click to toggle audio)' : 
+                'Share Screen (Right-click to toggle audio)';
         }
     }
     updateRecordingButton(isRecording) {
@@ -1310,6 +2009,9 @@ addRemoteVideo(userId, stream) {
         });
         if (this.isRecording) {
             this.stopRecording();
+        }
+        if (this.virtualBackgroundEnabled) {
+            this.disableVirtualBackground();
         }
         if (this.socket) {
             this.socket.disconnect();

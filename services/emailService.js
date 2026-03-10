@@ -14,8 +14,10 @@ class EmailService {
                 html: template.html
             };
             const info = await this.transporter.sendMail(mailOptions);
+            console.log('Welcome email sent successfully:', info.messageId);
             return { success: true, messageId: info.messageId };
         } catch (error) {
+            console.error('Error sending welcome email:', error);
             return { success: false, error: error.message };
         }
     }
@@ -29,8 +31,10 @@ class EmailService {
                 html: template.html
             };
             const info = await this.transporter.sendMail(mailOptions);
+            console.log('Confirmation email sent successfully:', info.messageId);
             return { success: true, messageId: info.messageId };
         } catch (error) {
+            console.error('Error sending confirmation email:', error);
             return { success: false, error: error.message };
         }
     }
@@ -52,8 +56,10 @@ class EmailService {
                 `
             };
             const info = await this.transporter.sendMail(mailOptions);
+            console.log('Password reset email sent successfully:', info.messageId);
             return { success: true, messageId: info.messageId };
         } catch (error) {
+            console.error('Error sending password reset email:', error);
             return { success: false, error: error.message };
         }
     }
@@ -105,8 +111,10 @@ class EmailService {
                 `
             };
             const info = await this.transporter.sendMail(mailOptions);
+            console.log('Meeting invitation email sent successfully:', info.messageId);
             return { success: true, messageId: info.messageId };
         } catch (error) {
+            console.error('Error sending meeting invitation email:', error);
             return { success: false, error: error.message };
         }
     }

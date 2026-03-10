@@ -1,16 +1,12 @@
-/* Be Right Back Feature Styles */
 #brb-btn {
     position: relative;
     transition: all 0.3s ease;
     overflow: visible;
 }
-
 #brb-btn.active {
     background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
     animation: tea-pulse 2s infinite;
 }
-
-/* Cool colored bubbles */
 .brb-bubbles {
     position: absolute;
     bottom: -5px;
@@ -19,13 +15,11 @@
     height: 30px;
     pointer-events: none;
 }
-
 .bubble {
     position: absolute;
     border-radius: 50%;
     animation: float-up 3s infinite ease-in-out;
 }
-
 .bubble-1 {
     width: 8px;
     height: 8px;
@@ -34,7 +28,6 @@
     right: 0;
     animation-delay: 0s;
 }
-
 .bubble-2 {
     width: 6px;
     height: 6px;
@@ -43,7 +36,6 @@
     right: 8px;
     animation-delay: 0.5s;
 }
-
 .bubble-3 {
     width: 10px;
     height: 10px;
@@ -52,7 +44,6 @@
     right: 15px;
     animation-delay: 1s;
 }
-
 @keyframes float-up {
     0% {
         opacity: 0;
@@ -67,7 +58,6 @@
         transform: translateY(-20px) scale(0.5);
     }
 }
-
 @keyframes tea-pulse {
     0%, 100% {
         transform: scale(1);
@@ -78,7 +68,6 @@
         box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
     }
 }
-
 .brb-status {
     position: fixed;
     top: 50%;
@@ -95,7 +84,6 @@
     overflow: hidden;
     backdrop-filter: blur(10px);
 }
-
 .brb-header {
     background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
     color: #fff;
@@ -106,13 +94,11 @@
     font-size: 18px;
     font-weight: 600;
 }
-
 .brb-header i {
     font-size: 24px;
     margin-right: 10px;
     color: #fff;
 }
-
 .brb-close {
     background: rgba(255, 255, 255, 0.2);
     border: none;
@@ -127,18 +113,15 @@
     transition: all 0.3s ease;
     font-size: 16px;
 }
-
 .brb-close:hover {
     background: rgba(255, 255, 255, 0.3);
     transform: scale(1.1);
 }
-
 .brb-content {
     padding: 20px;
     max-height: 60vh;
     overflow-y: auto;
 }
-
 .brb-timer {
     background: rgba(76, 175, 80, 0.1);
     border: 1px solid rgba(76, 175, 80, 0.3);
@@ -154,15 +137,12 @@
     color: #4CAF50;
     font-family: 'Courier New', monospace;
 }
-
 .brb-timer i {
     color: #8BC34A;
 }
-
 .brb-summary {
     margin-bottom: 20px;
 }
-
 .brb-summary h4 {
     color: #fff;
     margin-bottom: 15px;
@@ -171,12 +151,10 @@
     align-items: center;
     gap: 8px;
 }
-
 .brb-summary h4::before {
     content: "🍵";
     font-size: 20px;
 }
-
 .summary-content {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -185,24 +163,20 @@
     max-height: 300px;
     overflow-y: auto;
 }
-
 .summary-placeholder {
     color: rgba(255, 255, 255, 0.6);
     font-style: italic;
     text-align: center;
     padding: 20px;
 }
-
 .summary-section {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .summary-section:last-child {
     border-bottom: none;
 }
-
 .summary-section h5 {
     color: #4CAF50;
     font-size: 14px;
@@ -212,17 +186,14 @@
     align-items: center;
     gap: 8px;
 }
-
 .summary-section h5 i {
     font-size: 12px;
 }
-
 .summary-section ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
-
 .summary-section li {
     color: rgba(255, 255, 255, 0.8);
     font-size: 12px;
@@ -231,7 +202,6 @@
     padding-left: 15px;
     position: relative;
 }
-
 .summary-section li::before {
     content: "•";
     color: #4CAF50;
@@ -239,14 +209,12 @@
     left: 0;
     font-weight: bold;
 }
-
 .brb-actions {
     display: flex;
     gap: 10px;
     justify-content: center;
     flex-wrap: wrap;
 }
-
 .brb-download-btn,
 .brb-share-btn {
     background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
@@ -263,19 +231,15 @@
     gap: 8px;
     text-decoration: none;
 }
-
 .brb-download-btn:hover,
 .brb-share-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
 }
-
 .brb-download-btn:active,
 .brb-share-btn:active {
     transform: translateY(0);
 }
-
-/* Notification styles */
 .brb-notification {
     position: fixed;
     top: 20px;
@@ -293,79 +257,61 @@
     transform: translateY(-20px);
     transition: all 0.3s ease;
 }
-
 .brb-notification.show {
     opacity: 1;
     transform: translateY(0);
 }
-
 .brb-notification i {
     font-size: 18px;
 }
-
-/* Scrollbar styling */
 .summary-content::-webkit-scrollbar {
     width: 6px;
 }
-
 .summary-content::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
 }
-
 .summary-content::-webkit-scrollbar-thumb {
     background: rgba(76, 175, 80, 0.5);
     border-radius: 3px;
 }
-
 .summary-content::-webkit-scrollbar-thumb:hover {
     background: rgba(76, 175, 80, 0.7);
 }
-
-/* Mobile responsive */
 @media (max-width: 768px) {
     .brb-status {
         width: 95vw;
         max-height: 90vh;
         border-radius: 15px;
     }
-    
     .brb-header {
         padding: 15px;
         font-size: 16px;
     }
-    
     .brb-content {
         padding: 15px;
     }
-    
     .brb-timer {
         font-size: 20px;
         padding: 12px;
     }
-    
     .brb-actions {
         flex-direction: column;
     }
-    
     .brb-download-btn,
     .brrb-share-btn {
         width: 100%;
         justify-content: center;
     }
-    
     .brrb-notification {
         right: 10px;
         left: 10px;
         top: 10px;
     }
 }
-
-/* Gen-Z style animations */
 .brb-status {
     animation: slideInBounce 0.5s ease;
 }
-
 @keyframes slideInBounce {
     0% {
         opacity: 0;
@@ -380,11 +326,9 @@
         transform: translate(-50%, -50%) scale(1);
     }
 }
-
 .summary-section {
     animation: fadeInUp 0.3s ease;
 }
-
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -395,16 +339,12 @@
         transform: translateY(0);
     }
 }
-
-/* Tea cup animation for active state */
 #brb-btn.active i {
     color: #4CAF50;
 }
-
 #brb-btn.active .brb-bubbles {
     animation: bubble-burst 2s infinite;
 }
-
 @keyframes bubble-burst {
     0%, 100% {
         opacity: 1;

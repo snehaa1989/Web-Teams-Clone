@@ -1,0 +1,143 @@
+.meeting-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--sea-blue) 0%, var(--sea-green) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.meeting-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+}
+.form-control {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--light-text);
+    font-size: 16px;
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+.form-control:focus {
+    background: var(--glass-bg);
+    border-color: var(--sea-blue);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    outline: none;
+}
+.form-control::placeholder {
+    color: var(--light-text);
+    opacity: 0.7;
+}
+.btn-primary {
+    background: linear-gradient(135deg, var(--sea-blue) 0%, var(--sea-green) 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--light-text);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+.btn-outline-light {
+    background: transparent;
+    border: 1px solid var(--light-text);
+    color: var(--light-text);
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.btn-outline-light:hover {
+    background: var(--light-text);
+    color: var(--sea-blue);
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.link-display {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.link-input {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+    flex: 1;
+    font-family: monospace;
+    font-size: 14px;
+    color: var(--light-text);
+}
+.copy-btn {
+    background: transparent;
+    border: 1px solid var(--light-text);
+    color: var(--light-text);
+    border-radius: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.copy-btn:hover {
+    background: var(--light-text);
+    color: var(--sea-blue);
+}
+.copy-btn.copied {
+    background: var(--sea-green);
+    color: white;
+    border-color: var(--sea-green);
+}
+.icon-large {
+    font-size: 48px;
+    color: var(--sea-blue);
+    margin-bottom: 20px;
+}
+.text-white {
+    color: var(--light-text) !important;
+}
+.text-muted {
+    color: var(--light-text);
+    opacity: 0.7;
+}
+@media (max-width: 768px) {
+    .meeting-card {
+        padding: 20px;
+        margin: 10px;
+    }
+    .form-control {
+        font-size: 14px;
+        padding: 12px;
+    }
+    .btn-primary, .btn-outline-light {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+    .icon-large {
+        font-size: 36px;
+    }
+}
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.success-animation {
+    animation: slideInUp 0.5s ease-out;
+}

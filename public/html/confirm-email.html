@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confirmation - Zenference</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirmation-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .message {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .error {
+            color: #dc3545;
+        }
+        .success {
+            color: #28a745;
+        }
+        .loading {
+            color: #667eea;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-container">
+        <div class="logo">🎥 ZENFERENCE</div>
+        <div id="confirmation-content">
+            <div class="spinner"></div>
+            <div class="title loading">Confirming your email...</div>
+            <div class="message">Please wait while we confirm your email address.</div>
+        </div>
+    </div>
+    <script>
+        async function confirmEmail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const contentDiv = document.getElementById('confirmation-content');
+            console.log('=== FRONTEND CONFIRMATION DEBUG ===');
+            console.log('Current URL:', window.location.href);
+            console.log('Token from URL:', token);
+            console.log('Token length:', token ? token.length : 'null');
+            if (!token) {
+                console.log('No token found in URL');
+                contentDiv.innerHTML = `
+                    <div class="icon">❌</div>
+                    <div class="title error">Invalid Link</div>
+                    <div class="message error">No confirmation token found in the URL.</div>
+                    <a href="/register.html" class="btn">Try Again</a>
+                `;
+                return;
+            }
+            try {
+                console.log('Making request to:', `/api/auth/confirm-email/${token}`);
+                const response = await fetch(`/api/auth/confirm-email/${token}`);
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                const data = await response.json();
+                console.log('Response data:', data);
+                if (data.success) {
+                    contentDiv.innerHTML = `
+                        <div class="icon">✅</div>
+                        <div class="title success">${data.message}</div>
+                        <div class="message">Your email has been confirmed successfully. You can now log in and start using Zenference!</div>
+                        <a href="/index.html" class="btn">Go to Login</a>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `
+                        <div class="icon">❌</div>
+                        <div class="title error">Confirmation Failed</div>
+                        <div class="message error">${data.message}</div>
+                        <a href="/register.html" class="btn">Try Again</a>
+                    `;
+                }
+            } catch (error) {
+                console.error('Confirmation error:', error);
+                contentDiv.innerHTML = `
+                    <div class="icon">⚠️</div>
+                    <div class="title error">Something went wrong</div>
+                    <div class="message error">We couldn't confirm your email. Please try again or contact support.</div>
+                    <a href="/register.html" class="btn">Try Again</a>
+                `;
+            }
+        }
+        // Confirm email when page loads
+        confirmEmail();
+    </script>
+</body>
+</html>

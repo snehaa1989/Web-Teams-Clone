@@ -1,4 +1,18 @@
+const constraints = {
+    video: {
+        width: 1280,
+        height: 720,
+        frameRate: 30
+    },
+    audio: true
+}
 const stream = (socket)=>{
+    navigator.mediaDevices.getUserMedia(constraints).then((stream)=>{
+        socket.emit('stream', stream);
+    });
+    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream)=>{
+        socket.emit('stream', stream);
+    });
     socket.on('subscribe', (data)=>{
         socket.join(data.room);
         socket.join(data.socketId);

@@ -28,23 +28,50 @@ router.post('/register', async (req, res) => {
             email,
             password: hashedPassword
         });
+        console.log('User created:', user);
         const emailService = new EmailService();
         const confirmationToken = user.generateEmailConfirmationToken();
+        console.log('=== REGISTRATION EMAIL DEBUG ===');
+        console.log('Generated token:', confirmationToken);
+        console.log('Token length:', confirmationToken.length);
+        console.log('Token expires at:', user.emailConfirmationExpires);
+        console.log('Current time:', Date.now());
+        console.log('User before save:', {
+            id: user._id,
+            email: user.email,
+            hasToken: !!user.emailConfirmationToken,
+            tokenLength: user.emailConfirmationToken ? user.emailConfirmationToken.length : 0
+        });
         await user.save();
-        const confirmationLink = `http://localhost:3000/confirm-email/${confirmationToken}`;
+        console.log('User after save:', {
+            id: user._id,
+            email: user.email,
+            hasToken: !!user.emailConfirmationToken,
+            tokenLength: user.emailConfirmationToken ? user.emailConfirmationToken.length : 0,
+            isEmailConfirmed: user.isEmailConfirmed
+        });
+        const confirmationLink = `http:
+        console.log('Confirmation link:', confirmationLink);
         const emailResult = await emailService.sendConfirmationEmail(email, username, confirmationLink);
+        console.log('Email send result:', emailResult);
+        if (!emailResult.success) {
+            console.error('Failed to send confirmation email:', emailResult.error);
+        }
         res.status(201).json({
             success: true,
             message: 'User registered successfully. Please check your email to confirm your account.',
             requiresEmailConfirmation: true
         });
     } catch (error) {
+        console.error('Registration error:', error);
         if (error.name === 'MongoError' || error.name === 'MongooseError') {
+            console.error('Database connection issue detected. User not saved.');
             res.status(500).json({
                 success: false,
                 message: 'Registration failed: Database connection error. User not saved.'
             });
         } else {
+            console.error('Registration error:', error);
             res.status(500).json({
                 success: false,
                 message: 'Registration failed: ' + error.message
@@ -93,95 +120,83 @@ router.post('/login', async (req, res) => {
             user: user.getProfile()
         });
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error during login'
         });
     }
 });
-router.get('/test-confirm/:email', async (req, res) => {
-    try {
-        const { email } = req.params;
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-        user.isEmailConfirmed = true;
-        user.emailConfirmationToken = null;
-        user.emailConfirmationExpires = null;
-        await user.save();
-        res.json({
-            success: true,
-            message: 'Email confirmed manually',
-            user: {
-                email: user.email,
-                isEmailConfirmed: user.isEmailConfirmed
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-router.get('/debug-users', async (req, res) => {
-    try {
-        const users = await User.find({});
-        const userStates = users.map(user => ({
-            email: user.email,
-            isEmailConfirmed: user.isEmailConfirmed,
-            hasToken: !!user.emailConfirmationToken,
-            tokenLength: user.emailConfirmationToken ? user.emailConfirmationToken.length : 0,
-            tokenExpires: user.emailConfirmationExpires,
-            tokenExpiresDate: user.emailConfirmationExpires ? new Date(user.emailConfirmationExpires) : null
-        }));
-        res.json({
-            success: true,
-            users: userStates
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
 router.get('/confirm-email/:token', async (req, res) => {
     try {
         const { token } = req.params;
+        console.log('=== EMAIL CONFIRMATION DEBUG ===');
+        console.log('Token received:', token);
+        console.log('Token length:', token ? token.length : 'null');
         const userByToken = await User.findOne({ emailConfirmationToken: token });
+        console.log('User found by token alone:', userByToken ? 'YES' : 'NO');
+        if (userByToken) {
+            console.log('Token expiration check:', {
+                tokenExpires: userByToken.emailConfirmationExpires,
+                tokenExpiresDate: new Date(userByToken.emailConfirmationExpires),
+                currentTime: Date.now(),
+                currentDate: new Date(Date.now()),
+                isExpired: Date.now() > userByToken.emailConfirmationExpires,
+                timeDifference: userByToken.emailConfirmationExpires - Date.now()
+            });
+        }
         const currentTime = Date.now();
+        console.log('Current time (ms):', currentTime);
+        console.log('Current time (date):', new Date(currentTime));
         const user = await User.findOne({
             emailConfirmationToken: token,
             emailConfirmationExpires: { $gt: currentTime }
         });
+        console.log('Database query result with expiration check:', user);
+        console.log('User found with expiration check:', user ? 'YES' : 'NO');
         if (userByToken && !user) {
+            console.log('TOKEN EXPIRED - User found but token has expired');
             return res.status(400).json({
                 success: false,
                 message: 'Confirmation token has expired. Please request a new confirmation email.'
             });
         }
         if (!user) {
+            console.log('Confirmation failed: User not found or token expired');
             return res.status(400).json({
                 success: false,
                 message: 'Invalid or expired confirmation token'
             });
         }
+        console.log('Before confirmation update:', {
+            isEmailConfirmed: user.isEmailConfirmed,
+            hasToken: !!user.emailConfirmationToken,
+            hasExpiration: !!user.emailConfirmationExpires
+        });
         user.isEmailConfirmed = true;
         user.emailConfirmationToken = null;
         user.emailConfirmationExpires = null;
+        console.log('After confirmation update:', {
+            isEmailConfirmed: user.isEmailConfirmed,
+            hasToken: !!user.emailConfirmationToken,
+            hasExpiration: !!user.emailConfirmationExpires
+        });
         await user.save();
+        console.log('After save:', {
+            isEmailConfirmed: user.isEmailConfirmed,
+            hasToken: !!user.emailConfirmationToken,
+            hasExpiration: !!user.emailConfirmationExpires
+        });
+        console.log('Email confirmed successfully for user:', user.email);
         const emailService = new EmailService();
         const welcomeResult = await emailService.sendWelcomeEmail(user.email, user.username);
+        console.log('Welcome email sent:', welcomeResult.success);
         res.status(200).json({
             success: true,
             message: 'Email confirmed successfully! Welcome to Zenference!'
         });
     } catch (error) {
+        console.error('Email confirmation error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error during email confirmation'
@@ -207,7 +222,6 @@ router.post('/resend-confirmation', async (req, res) => {
         const confirmationToken = user.generateEmailConfirmationToken();
         await user.save();
         const emailService = new EmailService();
-        
         const emailResult = await emailService.sendConfirmationEmail(email, user.username, confirmationLink);
         if (!emailResult.success) {
             return res.status(500).json({
@@ -220,6 +234,7 @@ router.post('/resend-confirmation', async (req, res) => {
             message: 'Confirmation email sent successfully. Please check your inbox.'
         });
     } catch (error) {
+        console.error('Resend confirmation error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error while resending confirmation email'
@@ -240,6 +255,7 @@ router.post('/logout', async (req, res) => {
             message: 'Logout successful'
         });
     } catch (error) {
+        console.error('Logout error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error during logout'
@@ -267,6 +283,7 @@ router.get('/profile', async (req, res) => {
             user: user.getProfile()
         });
     } catch (error) {
+        console.error('Profile error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error fetching profile'

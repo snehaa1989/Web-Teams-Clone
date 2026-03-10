@@ -1,0 +1,52 @@
+# Node modules
+node_modules
+npm-debug.log*
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage directory
+coverage
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (will be created in container)
+uploads/*
+!uploads/.gitkeep
+
+# Documentation
+README.md
+*.md
+
+# Test files
+test/
+tests/
+__tests__/

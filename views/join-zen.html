@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Join a Zen - Zenference</title>
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+        <link rel='stylesheet' href='css/style.css' type="text/css">
+        <link rel='stylesheet' href='css/join-zen.css' type="text/css">
+        <script src='/socket.io/socket.io.js'></script>
+        <script type="module" src="js/auth.js"></script>
+        <script type="module" src='js/webrtc.js'></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.3.0/adapter.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src="js/join-zen.js"></script>
+    </head>
+    <body id="dark-mode">
+        <nav class="navbar fixed-top rounded-0 d-print-none glass-card" style="background: linear-gradient(90deg, var(--sea-blue) 0%, var(--sea-green) 50%, var(--light-pink) 100%); border-bottom: 2px solid var(--glass-border);">
+            <div class="text-white" id='meeting-topic' style="font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                <i class="fas fa-video mr-2"></i>Join Zen Meeting 🍃
+            </div>
+            <div class="ml-auto d-flex align-items-center">
+                <div class="user-info mr-3 text-white" id="user-info" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user-circle mr-2" style="font-size: 20px;"></i>
+                        <div>
+                            <div class="user-name" id="user-name" style="font-weight: 700; font-size: 14px;">User</div>
+                            <div class="user-email" id="user-email" style="font-size: 12px; opacity: 0.8;">user@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-sm rounded-0 btn-no-effect text-white ml-2" onclick="backToDashboard()" title="Back to Dashboard">
+                    <i class="fa fa-arrow-left"></i> <span class="d-none d-md-inline">Dashboard</span>
+                </button>
+                <button class="btn btn-sm rounded-0 btn-no-effect text-white ml-2" id='logout-btn' title="Logout">
+                    <i class="fa fa-sign-out-alt"></i> <span class="d-none d-md-inline">Logout</span>
+                </button>
+            </div>
+        </nav>
+        <div class="meeting-container">
+            <div class="meeting-card">
+                <div class="text-center mb-4">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h2 class="text-white mb-3" style="font-weight: 700;">Join a Zen Meeting</h2>
+                    <p class="text-white" style="opacity: 0.9;">Enter the Zen ID to join the meeting</p>
+                </div>
+                <div id="meeting-info" class="meeting-info" style="display: none;">
+                    <h5 class="text-white mb-3"><i class="fas fa-info-circle mr-2"></i>Meeting Details</h5>
+                    <div id="meeting-details" class="text-white">
+                    </div>
+                </div>
+                <div id="error-container"></div>
+                <form id="join-form">
+                    <div class="form-group mb-3">
+                        <label for="zen-id" class="text-white font-weight-600 mb-2">
+                            <i class="fas fa-hashtag mr-2"></i>Zen ID
+                        </label>
+                        <input type="text" class="form-control w-100" id='zen-id' placeholder="Enter Zen ID (e.g., zen_1234567890_abc123)" autocomplete="off" required>
+                        <small class="text-white" style="opacity: 0.7;">You can find the Zen ID in your invitation email</small>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="username" class="text-white font-weight-600 mb-2">
+                            <i class="fas fa-user mr-2"></i>Your Name
+                        </label>
+                        <input type="text" class="form-control w-100" id='username' placeholder="Enter your name" autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id='join-zen-btn'>
+                        <i class="fas fa-door-open mr-2"></i>Join Zen Meeting
+                    </button>
+                </form>
+                <div class="text-center mt-4">
+                    <p class="text-white" style="opacity: 0.7; font-size: 14px;">
+                        <i class="fas fa-lightbulb mr-1"></i>
+                        Make sure you have a stable internet connection and enabled camera/microphone
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
